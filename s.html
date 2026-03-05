@@ -1,77 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-        body { background: #0a0f0f; color: #00ffcc; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .panel { border: 2px solid #00ffcc; padding: 20px; border-radius: 10px; width: 400px; box-shadow: 0 0 15px #00ffcc55; }
-        h2 { text-align: center; letter-spacing: 2px; border-bottom: 1px solid #00ffcc; padding-bottom: 10px; }
-        .energy-stat { font-size: 1.2rem; margin: 15px 0; text-align: center; color: #fff; }
-        .subsystem { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 10px; background: #111; border-radius: 5px; }
-        button { background: transparent; border: 1px solid #00ffcc; color: #00ffcc; padding: 5px 10px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #00ffcc; color: #000; }
-        button:disabled { border-color: #444; color: #444; cursor: not-allowed; }
-        .error { color: #ff4444; font-size: 0.8rem; text-align: center; height: 15px; }
-    </style>
-</head>
-<body>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARC REACTOR STAGE 02</title>
 
-<div class="panel">
+  <style>
+    :root{
+      --bg:#060b0b;
+      --panel:#0c1414;
+      --ink:#00ffcc;
+      --ink2:#00bfa0;
+      --danger:#ff4444;
+      --white:#e9ffff;
+      --shadow: 0 0 18px rgba(0,255,204,.25);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding:22px;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(900px 600px at 50% 10%, rgba(0,255,204,.10), transparent 60%),
+                  radial-gradient(800px 500px at 50% 100%, rgba(0,255,204,.06), transparent 65%),
+                  var(--bg);
+      color: var(--ink);
+      overflow-x:hidden;
+    }
+
+    /* Animated scanlines + moving glow */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(to bottom, rgba(0,255,204,.06), transparent 20%, rgba(0,255,204,.04) 60%, transparent),
+        repeating-linear-gradient(to bottom, rgba(255,255,255,.045) 0 1px, transparent 1px 5px);
+      mix-blend-mode: screen;
+      opacity:.35;
+      animation: scan 6s linear infinite;
+    }
+    @keyframes scan{
+      0%{transform: translateY(-12px)}
+      100%{transform: translateY(12px)}
+    }
+
+    .panel{
+      width: min(460px, 95vw);
+      border: 1.5px solid rgba(0,255,204,.9);
+      background: linear-gradient(180deg, rgba(12,20,20,.92), rgba(6,11,11,.92));
+      padding: 18px 18px 14px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+      backdrop-filter: blur(6px);
+    }
+
+    /* Corner accents */
+    .panel::before, .panel::after{
+      content:"";
+      position:absolute;
+      width:18px;height:18px;
+      border:2px solid rgba(0,255,204,.9);
+      opacity:.85;
+    }
+    .panel::before{left:10px; top:10px; border-right:none;border-bottom:none}
+    .panel::after{right:10px; bottom:10px; border-left:none;border-top:none}
+
+    h2{
+      margin: 4px 0 12px;
+      text-align:center;
+      letter-spacing:3px;
+      font-weight:700;
+      font-size: 1.05rem;
+      padding-bottom:10px;
+      border-bottom: 1px solid rgba(0,255,204,.55);
+      position:relative;
+      text-shadow: 0 0 12px rgba(0,255,204,.35);
+    }
+
+    /* tiny animated dot line under header */
+    h2::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      bottom:-1px;
+      width: 140px;
+      height: 2px;
+      transform: translateX(-50%);
+      background: linear-gradient(90deg, transparent, rgba(0,255,204,.95), transparent);
+      filter: drop-shadow(0 0 8px rgba(0,255,204,.45));
+      animation: glowSweep 2.4s ease-in-out infinite;
+    }
+    @keyframes glowSweep{
+      0%,100%{opacity:.35}
+      50%{opacity:1}
+    }
+
+    .energy-stat{
+      font-size:1.03rem;
+      margin: 14px 0 10px;
+      text-align:center;
+      color: var(--white);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    /* Energy bar */
+    .bar{
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,255,204,.55);
+      background: rgba(0,255,204,.08);
+      overflow:hidden;
+      position:relative;
+      box-shadow: inset 0 0 10px rgba(0,255,204,.15);
+    }
+    .barFill{
+      height:100%;
+      width:100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(0,255,204,.95), rgba(0,191,160,.95));
+      box-shadow: 0 0 14px rgba(0,255,204,.35);
+      transition: width .35s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    /* moving shimmer inside fill */
+    .barFill::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(120deg, transparent 0 35%, rgba(255,255,255,.22) 45%, transparent 55% 100%);
+      transform: translateX(-60%);
+      animation: shimmer 1.3s linear infinite;
+      opacity:.8;
+    }
+    @keyframes shimmer{
+      0%{transform: translateX(-60%)}
+      100%{transform: translateX(60%)}
+    }
+
+    .error{
+      color: var(--danger);
+      font-size: .85rem;
+      text-align:center;
+      height: 18px;
+      margin: 6px 0 6px;
+      letter-spacing: .8px;
+      opacity:.9;
+    }
+    .error.flash{
+      animation: flash .18s ease-in-out 0s 6 alternate, shake .35s ease-in-out 0s 1;
+    }
+    @keyframes flash{
+      from{filter: drop-shadow(0 0 0 rgba(255,68,68,0))}
+      to{filter: drop-shadow(0 0 10px rgba(255,68,68,.7))}
+    }
+    @keyframes shake{
+      0%,100%{transform: translateX(0)}
+      20%{transform: translateX(-6px)}
+      40%{transform: translateX(6px)}
+      60%{transform: translateX(-4px)}
+      80%{transform: translateX(4px)}
+    }
+
+    #controls{margin-top:10px; display:flex; flex-direction:column; gap:10px;}
+
+    .subsystem{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding: 12px 12px;
+      background: linear-gradient(180deg, rgba(17,25,25,.75), rgba(10,16,16,.75));
+      border: 1px solid rgba(0,255,204,.22);
+      border-radius: 10px;
+      position:relative;
+      overflow:hidden;
+      box-shadow: 0 0 0 rgba(0,255,204,0);
+      transition: transform .18s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+    .subsystem:hover{
+      transform: translateY(-1px);
+      border-color: rgba(0,255,204,.45);
+      box-shadow: 0 0 16px rgba(0,255,204,.10);
+    }
+
+    /* subtle moving stripe on each row */
+    .subsystem::before{
+      content:"";
+      position:absolute;
+      inset:-40px -60px;
+      background: radial-gradient(circle at 20% 20%, rgba(0,255,204,.12), transparent 35%),
+                  linear-gradient(120deg, transparent 0 40%, rgba(0,255,204,.08) 48%, transparent 56% 100%);
+      transform: translateX(-10%);
+      animation: rowSweep 5.5s linear infinite;
+      opacity:.6;
+      pointer-events:none;
+    }
+    @keyframes rowSweep{
+      0%{transform: translateX(-18%)}
+      100%{transform: translateX(18%)}
+    }
+
+    .sysLeft{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      z-index:1;
+      min-width: 0;
+    }
+    .sysName{
+      font-weight:700;
+      color: var(--white);
+      letter-spacing: .6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sysMeta{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:.9rem;
+      color: rgba(233,255,255,.85);
+    }
+    .miniBar{
+      width: 140px;
+      height: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,255,204,.35);
+      background: rgba(0,255,204,.06);
+      overflow:hidden;
+      box-shadow: inset 0 0 8px rgba(0,255,204,.12);
+    }
+    .miniFill{
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(0,255,204,.85), rgba(0,191,160,.85));
+      transition: width .35s ease;
+    }
+
+    .sysBtns{
+      display:flex;
+      gap:8px;
+      z-index:1;
+      flex-shrink:0;
+    }
+
+    button{
+      background: rgba(0,255,204,.02);
+      border: 1px solid rgba(0,255,204,.85);
+      color: var(--ink);
+      padding: 7px 12px;
+      border-radius: 10px;
+      cursor:pointer;
+      transition: transform .08s ease, background .25s ease, color .25s ease, box-shadow .25s ease;
+      box-shadow: 0 0 0 rgba(0,255,204,0);
+      font-weight:700;
+      min-width: 42px;
+    }
+    button:hover{
+      background: rgba(0,255,204,.95);
+      color: #001010;
+      box-shadow: 0 0 16px rgba(0,255,204,.25);
+    }
+    button:active{
+      transform: translateY(1px) scale(.98);
+    }
+    button:disabled{
+      border-color: rgba(255,255,255,.18);
+      color: rgba(255,255,255,.25);
+      cursor:not-allowed;
+      background: transparent;
+      box-shadow:none;
+    }
+
+    /* pulse animation on update */
+    .subsystem.pulse{
+      animation: pulse .35s ease;
+    }
+    @keyframes pulse{
+      0%{box-shadow: 0 0 0 rgba(0,255,204,0); transform: scale(1)}
+      50%{box-shadow: 0 0 22px rgba(0,255,204,.25); transform: scale(1.01)}
+      100%{box-shadow: 0 0 0 rgba(0,255,204,0); transform: scale(1)}
+    }
+
+    /* footer hint */
+    .hint{
+      margin-top: 12px;
+      font-size: .78rem;
+      color: rgba(233,255,255,.55);
+      text-align:center;
+      letter-spacing:.4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="panel">
     <h2>ARC REACTOR STAGE 02</h2>
-    <div class="energy-stat">Total Available: <span id="remaining-energy">100</span> / 100 Units</div>
+
+    <div class="energy-stat">
+      <div>Total Available: <span id="remaining-energy">100</span> / 100 Units</div>
+      <div class="bar" aria-label="Total energy bar">
+        <div id="energy-fill" class="barFill" style="width:100%"></div>
+      </div>
+    </div>
+
     <div id="error-msg" class="error"></div>
 
     <!-- Subsystems -->
     <div id="controls"></div>
-</div>
 
-<script>
+    <div class="hint">Tip: Try maxing one subsystem and see the warning effect.</div>
+  </div>
+
+  <script>
     const MAX_ENERGY = 100;
     let allocatedEnergy = 0;
+
     const subsystems = [
-        { name: "Propulsion", power: 0 },
-        { name: "Defense", power: 0 },
-        { name: "Navigation", power: 0 },
-        { name: "Communication", power: 0 }
+      { name: "Propulsion", power: 0 },
+      { name: "Defense", power: 0 },
+      { name: "Navigation", power: 0 },
+      { name: "Communication", power: 0 }
     ];
 
     const controlsDiv = document.getElementById('controls');
     const energyDisplay = document.getElementById('remaining-energy');
     const errorMsg = document.getElementById('error-msg');
+    const energyFill = document.getElementById('energy-fill');
 
-    function render() {
-        controlsDiv.innerHTML = '';
-        subsystems.forEach((sys, index) => {
-            const div = document.createElement('div');
-            div.className = 'subsystem';
-            div.innerHTML = `
-                <span>${sys.name}: <strong>${sys.power}</strong></span>
-                <div>
-                    <button onclick="adjustPower(${index}, -5)">-</button>
-                    <button onclick="adjustPower(${index}, 5)">+</button>
-                </div>
-            `;
-            controlsDiv.appendChild(div);
-        });
-        energyDisplay.innerText = MAX_ENERGY - allocatedEnergy;
+    function flashError(text){
+      errorMsg.innerText = text;
+      errorMsg.classList.remove('flash');
+      // restart animation
+      void errorMsg.offsetWidth;
+      errorMsg.classList.add('flash');
+    }
+
+    function render(pulsedIndex = null) {
+      controlsDiv.innerHTML = '';
+
+      subsystems.forEach((sys, index) => {
+        const div = document.createElement('div');
+        div.className = 'subsystem' + (index === pulsedIndex ? ' pulse' : '');
+
+        const percent = Math.min(100, Math.max(0, (sys.power / MAX_ENERGY) * 100));
+
+        div.innerHTML = `
+          <div class="sysLeft">
+            <div class="sysName">${sys.name}</div>
+            <div class="sysMeta">
+              <span>Power: <strong>${sys.power}</strong></span>
+              <div class="miniBar" aria-label="${sys.name} power bar">
+                <div class="miniFill" style="width:${percent}%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sysBtns">
+            <button onclick="adjustPower(${index}, -5)">-</button>
+            <button onclick="adjustPower(${index}, 5)">+</button>
+          </div>
+        `;
+
+        controlsDiv.appendChild(div);
+      });
+
+      const remaining = MAX_ENERGY - allocatedEnergy;
+      energyDisplay.innerText = remaining;
+
+      const totalPercent = Math.min(100, Math.max(0, (remaining / MAX_ENERGY) * 100));
+      energyFill.style.width = totalPercent + "%";
     }
 
     function adjustPower(index, amount) {
-        errorMsg.innerText = "";
-        const newTotal = allocatedEnergy + amount;
+      errorMsg.innerText = "";
 
-        if (newTotal > MAX_ENERGY) {
-            errorMsg.innerText = "WARNING: TOTAL ENERGY EXCEEDED!";
-            return;
-        }
-        if (subsystems[index].power + amount < 0) return;
+      const nextPower = subsystems[index].power + amount;
+      if (nextPower < 0) return;
 
-        subsystems[index].power += amount;
-        allocatedEnergy = subsystems.reduce((sum, s) => sum + s.power, 0);
-        render();
+      // compute new allocated if we apply change
+      const newAllocated = allocatedEnergy + amount;
+      if (newAllocated > MAX_ENERGY) {
+        flashError("WARNING: TOTAL ENERGY EXCEEDED!");
+        return;
+      }
+
+      subsystems[index].power = nextPower;
+      allocatedEnergy = subsystems.reduce((sum, s) => sum + s.power, 0);
+
+      render(index);
     }
 
-    render();
-</script>
+    // Expose function for inline onclick
+    window.adjustPower = adjustPower;
 
+    render();
+  </script>
 </body>
 </html>
