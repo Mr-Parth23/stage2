@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body { background: #0a0f0f; color: #00ffcc; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .panel { border: 2px solid #00ffcc; padding: 20px; border-radius: 10px; width: 400px; box-shadow: 0 0 15px #00ffcc55; }
+        h2 { text-align: center; letter-spacing: 2px; border-bottom: 1px solid #00ffcc; padding-bottom: 10px; }
+        .energy-stat { font-size: 1.2rem; margin: 15px 0; text-align: center; color: #fff; }
+        .subsystem { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 10px; background: #111; border-radius: 5px; }
+        button { background: transparent; border: 1px solid #00ffcc; color: #00ffcc; padding: 5px 10px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #00ffcc; color: #000; }
+        button:disabled { border-color: #444; color: #444; cursor: not-allowed; }
+        .error { color: #ff4444; font-size: 0.8rem; text-align: center; height: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="panel">
+    <h2>ARC REACTOR STAGE 02</h2>
+    <div class="energy-stat">Total Available: <span id="remaining-energy">100</span> / 100 Units</div>
+    <div id="error-msg" class="error"></div>
+
+    <!-- Subsystems -->
+    <div id="controls"></div>
+</div>
+
+<script>
+    const MAX_ENERGY = 100;
+    let allocatedEnergy = 0;
+    const subsystems = [
+        { name: "Propulsion", power: 0 },
+        { name: "Defense", power: 0 },
+        { name: "Navigation", power: 0 },
+        { name: "Communication", power: 0 }
+    ];
+
+    const controlsDiv = document.getElementById('controls');
+    const energyDisplay = document.getElementById('remaining-energy');
+    const errorMsg = document.getElementById('error-msg');
+
+    function render() {
+        controlsDiv.innerHTML = '';
+        subsystems.forEach((sys, index) => {
+            const div = document.createElement('div');
+            div.className = 'subsystem';
+            div.innerHTML = `
+                <span>${sys.name}: <strong>${sys.power}</strong></span>
+                <div>
+                    <button onclick="adjustPower(${index}, -5)">-</button>
+                    <button onclick="adjustPower(${index}, 5)">+</button>
+                </div>
+            `;
+            controlsDiv.appendChild(div);
+        });
+        energyDisplay.innerText = MAX_ENERGY - allocatedEnergy;
+    }
+
+    function adjustPower(index, amount) {
+        errorMsg.innerText = "";
+        const newTotal = allocatedEnergy + amount;
+
+        if (newTotal > MAX_ENERGY) {
+            errorMsg.innerText = "WARNING: TOTAL ENERGY EXCEEDED!";
+            return;
+        }
+        if (subsystems[index].power + amount < 0) return;
+
+        subsystems[index].power += amount;
+        allocatedEnergy = subsystems.reduce((sum, s) => sum + s.power, 0);
+        render();
+    }
+
+    render();
+</script>
+
+</body>
+</html>
